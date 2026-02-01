@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Be My Valentine</title>
+
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: system-ui, sans-serif;
+        overflow: hidden;
+        background: radial-gradient(circle at top, #ffb6c1, #ff5c8a);
+    }
+
+    .container {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 25px;
+        z-index: 2;
+        text-align: center;
+    }
+
+    h1 {
+        color: white;
+        font-size: 3rem;
+        text-shadow: 0 4px 15px rgba(0,0,0,.2);
+    }
+
+    .buttons {
+        position: relative;
+        width: 300px;
+        height: 120px;
+    }
+
+    button {
+        padding: 14px 28px;
+        font-size: 1.2rem;
+        border-radius: 30px;
+        border: none;
+        cursor: pointer;
+        transition: transform .15s;
+    }
+
+    #yesBtn {
+        background: #fff;
+        color: #ff2f6d;
+        font-weight: bold;
+    }
+
+    #noBtn {
+        position: absolute;
+        background: #ff2f6d;
+        color: white;
+        left: 170px;
+        top: 10px;
+    }
+
+    canvas {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .message {
+        font-size: 2.2rem;
+        color: white;
+        display: none;
+    }
+</style>
+</head>
+<body>
+
+<canvas id="fireworks"></canvas>
+
+<div class="container">
+    <h1 id="question">S, will you be my Valentine? 💖</h1>
+
+    <div class="buttons" id="buttonArea">
+        <button id="yesBtn">Yes</button>
+        <button id="noBtn">No</button>
+    </div>
+
+    <div class="message" id="loveMsg">YAY!!! 🎉💘</div>
+</div>
+
+<script>
+/* ---------- No button runs away ---------- */
+
+const noBtn = document.getElementById("noBtn");
+const buttonArea = document.getElementById("buttonArea");
+
+let areaRect = buttonArea.getBoundingClientRect();
+
+window.addEventListener("resize", () => {
+    areaRect = buttonArea.getBoundingClientRect();
+});
+
+document.addEventListener("mousemove", (e) => {
+    const rect = noBtn.getBoundingClientRect();
+
+    const bx = rect.left + rect.width / 2;
+    const by = rect.top + rect.height / 2;
+
+    const dx = bx - e.clientX;
+    const dy = by - e.clientY;
+
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance < 120) {
+        const speed = 35;
+
+        let nx = noBtn.offsetLeft + (dx / distance) * speed;
+        let ny = noBtn.offsetTop  + (dy / distance) * speed;
+
+        // keep inside the visible button area
+        const maxX = areaRect.width - rect.width;
+        const maxY = areaRect.height - rect.height;
+
+        nx = Math.max(0, Math.min(maxX, nx));
+        ny = Math.max(0, Math.min(maxY, ny));
+
+        noBtn.style.left = nx + "px";
+        noBtn.style.top  = ny + "px";
+    }
+});
+
+/* ---------- Fireworks on YES ---------- */
+
+const yesBtn = document.getElementById("yesBtn");
+const canvas = document.getElementById("fireworks");
+const ctx = canvas.getContext("2d");
+
+let w, h;
+function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener("resize", resize);
+
+let particles = [];
+let fireworksOn = false;
+
+function random(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+function createFirework(x, y) {
+    const count = 120;
+    for (let i = 0; i < count; i++) {
+        particles.push({
+            x,
+            y,
+            vx: Math.cos(i) * random(1, 6),
+            vy: Math.sin(i) * random(1, 6),
+            life: random(40, 80),
+            color: `hsl(${Math.random() * 360},100%,60%)`
+        });
+    }
+}
+
+function loop() {
+    if (!fireworksOn) return;
+
+    ctx.clearRect(0, 0, w, h);
+
+    particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.03;
+        p.life--;
+
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    particles = particles.filter(p => p.life > 0);
+
+    requestAnimationFrame(loop);
+}
+
+yesBtn.addEventListener("click", () => {
+    document.getElementById("buttonArea").style.display = "none";
+    document.getElementById("question").style.display = "none";
+    document.getElementById("loveMsg").style.display = "block";
+
+    fireworksOn = true;
+
+    setInterval(() => {
+        createFirework(random(100, w - 100), random(100, h - 200));
+    }, 600);
+
+    loop();
+});
+</script>
+
+</body>
+</html>
